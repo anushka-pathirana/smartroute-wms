@@ -1,0 +1,6 @@
+held_out,train_instances,test_instances,test_decisive
+AsRecorded,25817,1929,1644
+Random,25532,1943,1646
+ClassBased,25365,1943,1688
+Dedicated,25444,1943,1651
+Hybrid,25446,1943,1676

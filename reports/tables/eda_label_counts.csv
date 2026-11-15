@@ -1,0 +1,6 @@
+storage_policy,LargestGap,Return,SShape
+AsRecorded,2047,2177,4919
+ClassBased,1711,2759,5237
+Dedicated,1687,3941,4079
+Hybrid,2605,1211,5891
+Random,2712,1774,5221

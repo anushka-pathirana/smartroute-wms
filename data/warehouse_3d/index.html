@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Warehouse 3D Viewer</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --panel: #ffffff; --ink: #1f1f1f; --muted: #5f5e5a; --line: #dcdde1;
+    --accent: #2a78d6; --hi: #d6336c; --teal: #138a8a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+               font: 13px/1.4 "Segoe UI", system-ui, -apple-system, Arial, sans-serif; }
+  #app { display: grid; grid-template-columns: 290px 1fr; grid-template-rows: auto 1fr; height: 100vh; }
+  header { grid-column: 1 / 3; display: flex; align-items: center; gap: 18px; padding: 10px 16px;
+           background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0; }
+  header .stats { display: flex; gap: 16px; color: var(--muted); flex-wrap: wrap; }
+  header .stats b { color: var(--ink); }
+  aside { background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; padding: 10px 14px 20px; }
+  aside h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+             margin: 16px 0 6px; }
+  aside h2:first-child { margin-top: 4px; }
+  label.row { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+  select, input[type=text] { width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px;
+                             font: inherit; background: #fff; color: var(--ink); }
+  .btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  button { padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fff;
+           font: inherit; cursor: pointer; color: var(--ink); }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.primary:hover { filter: brightness(1.08); color: #fff; }
+  .levels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .note { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  .msg { margin-top: 6px; font-size: 12px; }
+  .msg.err { color: #b42318; }
+  main { position: relative; overflow: hidden; }
+  #canvas { position: absolute; inset: 0; }
+  #legend { position: absolute; left: 12px; bottom: 12px; background: rgba(255,255,255,.94); border: 1px solid var(--line);
+            border-radius: 8px; padding: 8px 10px; max-width: 320px; font-size: 12px; }
+  #legend .title { font-weight: 600; margin-bottom: 4px; }
+  #legend .item { display: inline-flex; align-items: center; gap: 5px; margin: 2px 10px 2px 0; }
+  #legend .sw { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(0,0,0,.15); }
+  #tooltip { position: absolute; pointer-events: none; background: #1f1f1f; color: #fff; padding: 6px 8px;
+             border-radius: 6px; font-size: 12px; display: none; white-space: nowrap; z-index: 5; }
+  #details { position: absolute; top: 12px; right: 12px; width: 300px; max-height: calc(100% - 24px); overflow-y: auto;
+             background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+             display: none; box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+  #details h3 { margin: 0 0 2px; font-size: 18px; }
+  #details .close { position: absolute; top: 8px; right: 10px; border: none; font-size: 18px; padding: 0 4px; }
+  table.kv { width: 100%; border-collapse: collapse; margin: 6px 0; }
+  table.kv td { padding: 3px 0; border-bottom: 1px solid #eef0f2; vertical-align: top; }
+  table.kv td:first-child { color: var(--muted); width: 45%; }
+  .chip { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11px; color: #fff; }
+  .list { max-height: 220px; overflow-y: auto; border: 1px solid #eef0f2; border-radius: 6px; margin-top: 6px; }
+  .list div { padding: 3px 8px; border-bottom: 1px solid #f2f3f5; cursor: pointer; display: flex; justify-content: space-between; }
+  .list div:hover { background: #f3f7fd; }
+  #hint { position: absolute; top: 12px; left: 12px; background: rgba(255,255,255,.9); border: 1px solid var(--line);
+          border-radius: 8px; padding: 6px 10px; font-size: 12px; color: var(--muted); }
+  #plans { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none; z-index: 20; }
+  #plans .box { position: absolute; inset: 24px; background: #fff; border-radius: 10px; display: flex; flex-direction: column; }
+  #plans .bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  #plans .bar .sp { flex: 1; }
+  #plans .scroll { flex: 1; overflow: auto; background: #fafafa; }
+  #plans img { display: block; width: 100%; height: auto; }
+  #plans img.full { width: 2600px; max-width: none; }
+  button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  @media (max-width: 760px) {
+    #app { grid-template-columns: 1fr; grid-template-rows: auto auto 60vh; }
+    aside { border-right: none; border-bottom: 1px solid var(--line); max-height: 40vh; }
+    header { grid-column: 1; }
+    #details { width: calc(100% - 24px); }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Warehouse 3D Viewer</h1>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <aside>
+    <h2>View</h2>
+    <div class="btns">
+      <button id="view3d" class="primary">3D view</button>
+      <button id="viewTop">Top view</button>
+      <button id="viewReset">Reset</button>
+      <button id="openPlans">Floor plans (SVG)</button>
+    </div>
+
+    <h2>Colour locations by</h2>
+    <select id="colourBy">
+      <option value="picks">Pick frequency (recorded order lines)</option>
+      <option value="abc">ABC class of the most-picked product</option>
+      <option value="plan">Storage-plan class (choose plan below)</option>
+      <option value="level">Rack level</option>
+      <option value="rack">Rack</option>
+    </select>
+
+    <h2>Storage plan</h2>
+    <select id="plan">
+      <option value="recorded">As recorded (products actually picked)</option>
+      <option value="random">Random storage</option>
+      <option value="class_based">Class-based storage (ABC)</option>
+      <option value="dedicated">Dedicated storage (XYZ)</option>
+      <option value="hybrid">Hybrid storage (XYZ)</option>
+    </select>
+    <div class="note">Used by the location details, product search and the storage-plan colouring.</div>
+
+    <h2>Show levels</h2>
+    <div class="levels">
+      <label class="row"><input type="checkbox" class="lvl" value="1" checked> 1</label>
+      <label class="row"><input type="checkbox" class="lvl" value="2" checked> 2</label>
+      <label class="row"><input type="checkbox" class="lvl" value="3" checked> 3</label>
+      <label class="row"><input type="checkbox" class="lvl" value="4" checked> 4</label>
+    </div>
+    <label class="row"><input type="checkbox" id="showSupport" checked> Aisle-end points (LC / CC / RC)</label>
+    <label class="row"><input type="checkbox" id="showRacks" checked> Rack letters</label>
+
+    <h2>Find location or product</h2>
+    <input type="text" id="findText" placeholder="e.g. H-06-13 or 8N10W9">
+    <div class="btns"><button id="findBtn" class="primary">Find</button><button id="clearBtn">Clear</button></div>
+    <div class="msg" id="findMsg"></div>
+
+    <h2>Picking wave</h2>
+    <input type="text" id="waveText" placeholder="wave number, e.g. 43175">
+    <div class="btns">
+      <button id="waveBtn" class="primary">Show</button>
+      <button id="wavePrev">&#8592;</button><button id="waveNext">&#8594;</button>
+      <button id="waveRand">Random</button>
+    </div>
+    <div class="msg" id="waveMsg"></div>
+    <div class="list" id="waveList" style="display:none"></div>
+
+    <h2>How to use</h2>
+    <div class="note">
+      Left-drag to rotate, right-drag to pan, scroll to zoom. Hover a box for its code; click it for details.
+      Each box is one storage location; boxes are stacked by rack level (1 = floor).
+      Coordinates are drawing units of the authors' CAD layout (1 unit = 0.07625 m).
+    </div>
+    <div class="note" id="builtNote"></div>
+  </aside>
+
+  <main>
+    <div id="canvas"></div>
+    <div id="hint">Teal = I/O point (depot, CC-08) &nbsp;|&nbsp; grey strips = aisles</div>
+    <div id="legend"></div>
+    <div id="tooltip"></div>
+    <div id="details"></div>
+  </main>
+</div>
+
+<div id="plans">
+  <div class="box">
+    <div class="bar">
+      <b>Authors' floor plans</b>
+      <button class="pl" data-z="1">Level 1</button><button class="pl" data-z="2">Level 2</button>
+      <button class="pl" data-z="3">Level 3</button><button class="pl" data-z="4">Level 4</button>
+      <button id="planZoom">Zoom: fit</button>
+      <span class="sp"></span>
+      <span class="note">Source: data/raw/dataset_Layout_Z*.svg</span>
+      <button id="planClose">Close</button>
+    </div>
+    <div class="scroll"><img id="planImg" alt="Floor plan"></div>
+  </div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="warehouse_data.js"></script>
+<script>
+(function () {
+  "use strict";
+  if (!window.WAREHOUSE) {
+    document.getElementById("canvas").innerHTML =
+      '<p style="padding:24px">warehouse_data.js is missing. Run <code>python build_viewer.py</code> in this folder.</p>';
+    return;
+  }
+  const W = window.WAREHOUSE;
+  const U = W.meta.unitToMetres;
+  // location row: [code, x, y, z, rack, bay, slot, lines, units, waves, top3, abc, allRefs]
+  const L = W.locations.map((r, i) => ({ i, code: r[0], x: r[1], y: r[2], z: r[3], rack: r[4], bay: r[5],
+    slot: r[6], lines: r[7], units: r[8], waves: r[9], top: r[10], abc: r[11], refs: r[12] }));
+  const P = W.products;                       // [ref, abc]
+  const refId = {}; P.forEach((p, i) => refId[p[0].toUpperCase()] = i);
+  const codeId = {}; L.forEach(l => codeId[l.code.toUpperCase()] = l.i);
+  const waveIdx = {}; W.waves.forEach((w, i) => waveIdx[w[0]] = i);
+
+  // ---------- colours ----------
+  const C = {
+    none: "#c9cbd0", dim: "#e3e4e7", hi: "#d6336c",
+    abc: { A: "#d6452a", B: "#eda100", C: "#2a78d6" },
+    xyz: { X: "#6250d6", Y: "#1baf7a", Z: "#2a78d6", C: "#8a8d93" },
+    level: ["#b7d3f2", "#6fa8e6", "#2a78d6", "#174a8c"],
+    heat: ["#fde3cf", "#f9b98c", "#f08a4b", "#d9591f", "#9c3a0d"],
+    rack: ["#7d8fa6", "#a9b6c8"]
+  };
+  const rackLetters = [...new Set(L.map(l => l.rack))].sort();
+
+  // pick-frequency bins (quantiles of non-zero locations)
+  const nz = L.map(l => l.lines).filter(v => v > 0).sort((a, b) => a - b);
+  const q = p => nz[Math.min(nz.length - 1, Math.floor(p * nz.length))];
+  const heatCuts = [q(0.2), q(0.4), q(0.6), q(0.8)];
+  const heatBin = v => v <= 0 ? -1 : heatCuts.filter(c => v > c).length;
+
+  // ---------- header stats ----------
+  const m = W.meta;
+  document.getElementById("stats").innerHTML =
+    `<span><b>${m.numLocations.toLocaleString()}</b> rack locations</span>` +
+    `<span><b>${rackLetters.length}</b> racks, 4 levels</span>` +
+    `<span><b>${m.numWaves.toLocaleString()}</b> waves with rack picks</span>` +
+    `<span><b>${m.numOrderLines.toLocaleString()}</b> order lines</span>` +
+    `<span>${m.period[0].slice(0, 10)} to ${m.period[1].slice(0, 10)}</span>`;
+  document.getElementById("builtNote").textContent = `Data built ${m.builtAt.replace("T", " ")} from ${m.source}.`;
+
+  // ---------- scene ----------
+  const host = document.getElementById("canvas");
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  host.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color("#f4f5f7");
+  const camera = new THREE.PerspectiveCamera(40, 1, 5, 20000);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.maxPolarAngle = Math.PI / 2.05;
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xb0b4bb, 0.85));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.55);
+  sun.position.set(-600, 1200, 900);
+  scene.add(sun);
+
+  const CX = 376, CY = 720;                         // centre of the layout (drawing units)
+  const wx = x => x - CX, wz = y => -(y - CY);      // drawing (x, y) -> world (X, Z); world Y = height
+  const LEVEL_H = 14, BOX = { w: 14, d: 26, h: 12 };
+
+  // floor (L-shaped building) and aisles
+  function rect(x0, x1, y0, y1, color, h) {
+    const g = new THREE.PlaneGeometry(x1 - x0, y1 - y0);
+    const mesh = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color }));
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(wx((x0 + x1) / 2), h, wz((y0 + y1) / 2));
+    scene.add(mesh);
+    return mesh;
+  }
+  rect(46, 424, -50, 1492, "#ffffff", 0);
+  rect(424, 708, 612, 1492, "#ffffff", 0);
+  const sp = {}; W.support.forEach(s => sp[s[0]] = { x: s[1], y: s[2] });
+  const aisleYs = W.support.filter(s => s[0].startsWith("LC")).map(s => s[2]);
+  const AISLE = "#e2e5ea";
+  aisleYs.forEach(y => {
+    rect(66, 403, y - 12, y + 12, AISLE, 0.2);
+    if (y >= 631) rect(403, 686, y - 12, y + 12, AISLE, 0.2);
+  });
+  rect(54, 78, -29, 1471, AISLE, 0.3);       // left cross aisle
+  rect(391, 415, -29, 1471, AISLE, 0.3);     // centre cross aisle
+  rect(674, 698, 631, 1471, AISLE, 0.3);     // right cross aisle
+
+  // ---------- locations (instanced boxes) ----------
+  const boxGeo = new THREE.BoxGeometry(BOX.w, BOX.h, BOX.d);
+  const boxMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  const boxes = new THREE.InstancedMesh(boxGeo, boxMat, L.length);
+  boxes.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  boxes.frustumCulled = false;   // r147 culls instanced meshes by the single-box bounds
+  scene.add(boxes);
+  const levelOn = { 1: true, 2: true, 3: true, 4: true };
+  const tmp = new THREE.Object3D();
+  const baseY = l => (l.z - 1) * LEVEL_H + BOX.h / 2 + 0.6;
+  function placeBoxes() {
+    L.forEach(l => {
+      tmp.position.set(wx(l.x), baseY(l), wz(l.y));
+      const s = levelOn[l.z] ? 1 : 0.0001;
+      tmp.scale.set(s, s, s);
+      tmp.updateMatrix();
+      boxes.setMatrixAt(l.i, tmp.matrix);
+    });
+    boxes.instanceMatrix.needsUpdate = true;
+
+  }
+
+  // ---------- labels (sprites) ----------
+  function makeLabel(text, opts) {
+    const o = Object.assign({ size: 26, color: "#1f1f1f", bg: "rgba(255,255,255,0.85)", scale: 0.00045 }, opts || {});
+    const cv = document.createElement("canvas"), ctx = cv.getContext("2d");
+    ctx.font = `600 ${o.size}px Segoe UI, Arial`;
+    const w = Math.ceil(ctx.measureText(text).width) + 16, h = o.size + 12;
+    cv.width = w; cv.height = h;
+    ctx.font = `600 ${o.size}px Segoe UI, Arial`;
+    if (o.bg) { ctx.fillStyle = o.bg; ctx.fillRect(0, 0, w, h); }
+    ctx.fillStyle = o.color; ctx.textBaseline = "middle"; ctx.fillText(text, 8, h / 2 + 1);
+    const tex = new THREE.CanvasTexture(cv);
+    tex.minFilter = THREE.LinearFilter;
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, sizeAttenuation: false }));
+    spr.scale.set(w * o.scale, h * o.scale, 1);
+    spr.renderOrder = 10;
+    return spr;
+  }
+  const supportGroup = new THREE.Group(); scene.add(supportGroup);
+  const pointGeo = new THREE.CylinderGeometry(4, 4, 3, 16);
+  W.support.forEach(([label, x, y]) => {
+    const isDepot = label === m.depot;
+    const marker = new THREE.Mesh(pointGeo, new THREE.MeshLambertMaterial({ color: "#9aa0a8" }));
+    marker.position.set(wx(x), 1.5, wz(y));
+    supportGroup.add(marker);
+    if (!isDepot) {
+      const t = makeLabel(label, { size: 20, color: "#5f5e5a", bg: null, scale: 0.0004 });
+      t.position.set(wx(x), 10, wz(y));
+      supportGroup.add(t);
+    }
+  });
+  // depot / I/O point
+  const depotXY = sp[m.depot];
+  const depot = new THREE.Mesh(new THREE.BoxGeometry(22, 22, 22), new THREE.MeshLambertMaterial({ color: "#138a8a" }));
+  depot.position.set(wx(depotXY.x), 11, wz(depotXY.y));
+  scene.add(depot);
+  const depotLabel = makeLabel(`I/O point (depot) ${m.depot}`, { color: "#ffffff", bg: "#138a8a", size: 24, scale: 0.0005 });
+  depotLabel.position.set(wx(depotXY.x), 42, wz(depotXY.y));
+  scene.add(depotLabel);
+
+  const rackGroup = new THREE.Group(); scene.add(rackGroup);
+  rackLetters.forEach(r => {
+    const rows = {};
+    L.filter(l => l.rack === r).forEach(l => { (rows[l.y] = rows[l.y] || []).push(l.x); });
+    Object.entries(rows).forEach(([y, xs]) => {
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      [minX - 15, maxX + 15].forEach(x => {
+        const t = makeLabel(r, { size: 26, scale: 0.00042 });
+        t.position.set(wx(x), 26, wz(+y));
+        rackGroup.add(t);
+      });
+    });
+  });
+
+  // ---------- wave pins ----------
+  const pinGeo = new THREE.ConeGeometry(6, 16, 12); pinGeo.rotateX(Math.PI);
+  const pins = new THREE.InstancedMesh(pinGeo, new THREE.MeshLambertMaterial({ color: C.hi }), 40);
+  pins.count = 0; pins.frustumCulled = false; scene.add(pins);
+
+  // ---------- state & colouring ----------
+  const state = { colourBy: "picks", plan: "recorded", highlight: null, selected: null, wave: null };
+  const col = new THREE.Color();
+
+  function planOf(key) { return key === "recorded" ? null : W.policies[key]; }
+  function locColour(l) {
+    switch (state.colourBy) {
+      case "picks": { const b = heatBin(l.lines); return b < 0 ? C.none : C.heat[b]; }
+      case "abc": return l.abc ? C.abc[l.abc] : C.none;
+      case "level": return C.level[l.z - 1];
+      case "rack": return C.rack[rackLetters.indexOf(l.rack) % 2];
+      case "plan": {
+        const pl = planOf(state.plan);
+        if (!pl || !pl.classColumn) return C.none;
+        const v = pl.classes[l.i];
+        return (pl.classColumn === "ABCCOD" ? C.abc[v] : C.xyz[v]) || C.none;
+      }
+    }
+    return C.none;
+  }
+  function paint() {
+    L.forEach(l => {
+      let c = locColour(l);
+      if (state.highlight) c = state.highlight.has(l.i) ? C.hi : C.dim;
+      if (state.selected === l.i) c = "#111111";
+      boxes.setColorAt(l.i, col.set(c));
+    });
+    boxes.instanceColor.needsUpdate = true;
+    legend();
+  }
+  function legend() {
+    const el = document.getElementById("legend");
+    const item = (c, t) => `<span class="item"><span class="sw" style="background:${c}"></span>${t}</span>`;
+    let html = "";
+    if (state.highlight) {
+      html = `<div class="title">${state.highlightTitle}</div>` + item(C.hi, "matching locations") + item(C.dim, "other locations");
+    } else if (state.colourBy === "picks") {
+      const r = [`1-${heatCuts[0]}`, `${heatCuts[0] + 1}-${heatCuts[1]}`, `${heatCuts[1] + 1}-${heatCuts[2]}`,
+                 `${heatCuts[2] + 1}-${heatCuts[3]}`, `> ${heatCuts[3]}`];
+      html = `<div class="title">Order lines picked per location (Jan-Oct 2023)</div>` +
+        item(C.none, "never picked") + C.heat.map((c, i) => item(c, r[i])).join("");
+    } else if (state.colourBy === "abc") {
+      html = `<div class="title">ABC class of the product picked most at the location</div>` +
+        item(C.abc.A, "A - fast") + item(C.abc.B, "B - medium") + item(C.abc.C, "C - slow") + item(C.none, "never picked");
+    } else if (state.colourBy === "level") {
+      html = `<div class="title">Rack level</div>` + C.level.map((c, i) => item(c, `Level ${i + 1}`)).join("");
+    } else if (state.colourBy === "rack") {
+      html = `<div class="title">Racks A to R (alternating shades; letters shown at row ends)</div>` +
+        item(C.rack[0], "A, C, E ...") + item(C.rack[1], "B, D, F ...");
+    } else {
+      const pl = planOf(state.plan);
+      if (!pl) html = `<div class="title">Choose a storage plan (Random has no class column)</div>`;
+      else if (!pl.classColumn) html = `<div class="title">${pl.label}: no location class in this file</div>` + item(C.none, "all locations");
+      else if (pl.classColumn === "ABCCOD")
+        html = `<div class="title">${pl.label}: location class (ABCCOD)</div>` +
+          item(C.abc.A, "A") + item(C.abc.B, "B") + item(C.abc.C, "C") + item(C.none, "not in plan");
+      else html = `<div class="title">${pl.label}: location class (XYZCOD)</div>` +
+          ["X", "Y", "Z", "C"].map(k => item(C.xyz[k], k)).join("") + item(C.none, "not in plan");
+    }
+    el.innerHTML = html;
+  }
+
+  // ---------- details panel ----------
+  const abcChip = a => a ? `<span class="chip" style="background:${C.abc[a]}">${a}</span>` : "";
+  function showDetails(i) {
+    state.selected = i; paint();
+    const l = L[i], el = document.getElementById("details");
+    const pos = l.slot.length === 2 ? `level ${l.slot[0]}, position ${l.slot[1]}` : l.slot;
+    let rows = `
+      <tr><td>Rack / bay</td><td>${l.rack} / ${l.bay}</td></tr>
+      <tr><td>Level (z)</td><td>${l.z} &nbsp;<span class="note">(code part ${l.slot}: ${pos})</span></td></tr>
+      <tr><td>Position x, y</td><td>${l.x}, ${l.y} units<br>${(l.x * U).toFixed(1)} m, ${(l.y * U).toFixed(1)} m</td></tr>
+      <tr><td>Order lines picked</td><td>${l.lines.toLocaleString()}</td></tr>
+      <tr><td>Units picked</td><td>${l.units.toLocaleString()}</td></tr>
+      <tr><td>Waves visiting</td><td>${l.waves.toLocaleString()}</td></tr>`;
+    let html = `<button class="close" id="detClose">&times;</button><h3>${l.code}</h3>
+      <div class="note">Storage location</div><table class="kv">${rows}</table>`;
+    if (l.top.length) {
+      html += `<b>Most-picked products</b><table class="kv">` +
+        l.top.map(([r, n]) => `<tr><td>${P[r][0]} ${abcChip(P[r][1])}</td><td>${n.toLocaleString()} units</td></tr>`).join("") +
+        `</table>`;
+    }
+    const pl = planOf(state.plan);
+    if (pl) {
+      const slots = pl.slots[i] || [];
+      const cls = pl.classes[i];
+      html += `<b>${pl.label} plan</b>${pl.classColumn ? ` &nbsp;<span class="note">${pl.classColumn} = ${cls || "-"}</span>` : ""}`;
+      if (!slots.length) html += `<div class="note">No slots for this location in this plan.</div>`;
+      else {
+        const grouped = {};
+        slots.forEach(([r, s]) => { const k = `${r}|${s}`; grouped[k] = (grouped[k] || 0) + 1; });
+        html += `<div class="note">${slots.length} occupied slot(s): product, size and number of slots</div><table class="kv">` +
+          Object.entries(grouped).sort((a, b) => b[1] - a[1]).map(([k, n]) => {
+            const [r, s] = k.split("|");
+            return `<tr><td>${P[r][0]} ${abcChip(P[r][1])}</td><td>size ${s} &times; ${n}</td></tr>`;
+          }).join("") + `</table>`;
+      }
+    } else {
+      html += `<div class="note">Choose a storage plan on the left to see which products it places here.</div>`;
+    }
+    el.innerHTML = html;
+    el.style.display = "block";
+    document.getElementById("detClose").onclick = () => { el.style.display = "none"; state.selected = null; paint(); };
+  }
+
+  // ---------- picking (hover / click) ----------
+  const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+  const tip = document.getElementById("tooltip");
+  function hitAt(ev) {
+    const r = renderer.domElement.getBoundingClientRect();
+    mouse.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(mouse, camera);
+    const hits = ray.intersectObject(boxes).filter(h => levelOn[L[h.instanceId].z]);
+    return hits.length ? hits[0].instanceId : null;
+  }
+  renderer.domElement.addEventListener("pointermove", ev => {
+    const i = hitAt(ev);
+    if (i === null) { tip.style.display = "none"; renderer.domElement.style.cursor = ""; return; }
+    const l = L[i], r = host.getBoundingClientRect();
+    tip.innerHTML = `<b>${l.code}</b> &nbsp;level ${l.z} &nbsp;|&nbsp; ${l.lines.toLocaleString()} order lines`;
+    tip.style.left = (ev.clientX - r.left + 14) + "px";
+    tip.style.top = (ev.clientY - r.top + 14) + "px";
+    tip.style.display = "block";
+    renderer.domElement.style.cursor = "pointer";
+  });
+  renderer.domElement.addEventListener("pointerleave", () => tip.style.display = "none");
+  let downAt = null;
+  renderer.domElement.addEventListener("pointerdown", ev => downAt = [ev.clientX, ev.clientY]);
+  renderer.domElement.addEventListener("pointerup", ev => {
+    if (!downAt || Math.hypot(ev.clientX - downAt[0], ev.clientY - downAt[1]) > 4) return;
+    const i = hitAt(ev);
+    if (i !== null) showDetails(i);
+  });
+
+  // ---------- camera ----------
+  function view3d() { camera.position.set(-720, 800, 950); controls.target.set(0, 0, 0); controls.update(); }
+  function viewTop() { camera.position.set(0, 2100, 1); controls.target.set(0, 0, 0); controls.update(); }
+  function focusOn(l) {
+    const t = new THREE.Vector3(wx(l.x), baseY(l), wz(l.y));
+    const off = camera.position.clone().sub(controls.target).setLength(420);
+    controls.target.copy(t); camera.position.copy(t.clone().add(off)); controls.update();
+  }
+
+  // ---------- find ----------
+  function setHighlight(set, title) { state.highlight = set; state.highlightTitle = title; paint(); }
+  function clearAll() {
+    state.highlight = null; state.wave = null; pins.count = 0;
+    document.getElementById("findMsg").textContent = "";
+    document.getElementById("waveMsg").textContent = "";
+    document.getElementById("waveList").style.display = "none";
+    paint();
+  }
+  function find() {
+    const raw = document.getElementById("findText").value.trim(), key = raw.toUpperCase();
+    const msg = document.getElementById("findMsg"); msg.className = "msg";
+    if (!key) return;
+    state.wave = null; pins.count = 0; document.getElementById("waveList").style.display = "none";
+    if (key in codeId) {
+      const l = L[codeId[key]];
+      setHighlight(new Set([l.i]), `Location ${l.code}`);
+      if (!levelOn[l.z]) msg.textContent = `Level ${l.z} is hidden - tick it under "Show levels".`;
+      else msg.textContent = `Found ${l.code}.`;
+      focusOn(l); showDetails(l.i); return;
+    }
+    if (key in refId) {
+      const r = refId[key], pl = planOf(state.plan), set = new Set();
+      if (pl) Object.entries(pl.slots).forEach(([i, sl]) => { if (sl.some(s => s[0] === r)) set.add(+i); });
+      else L.forEach(l => { if (l.refs.includes(r)) set.add(l.i); });
+      const where = pl ? `stored under the ${pl.label} plan` : "picked from (as recorded)";
+      setHighlight(set, `Product ${P[r][0]} - locations ${where}`);
+      msg.innerHTML = `${P[r][0]} ${abcChip(P[r][1])}: <b>${set.size}</b> location(s) ${where}.`;
+      return;
+    }
+    msg.className = "msg err";
+    msg.textContent = `"${raw}" is not a rack location code or product reference.`;
+  }
+
+  // ---------- waves ----------
+  function showWave(i) {
+    const w = W.waves[i]; if (!w) return;
+    state.wave = i;
+    const [num, created, op, locs, nonRack] = w;
+    document.getElementById("waveText").value = num;
+    setHighlight(new Set(locs), `Wave ${num}: pick locations`);
+    pins.count = Math.min(locs.length, 40);
+    locs.slice(0, 40).forEach((li, k) => {
+      const l = L[li];
+      tmp.position.set(wx(l.x), baseY(l) + BOX.h / 2 + 12, wz(l.y)); tmp.scale.set(1, 1, 1); tmp.updateMatrix();
+      pins.setMatrixAt(k, tmp.matrix);
+    });
+    pins.instanceMatrix.needsUpdate = true;
+
+    document.getElementById("waveMsg").innerHTML =
+      `Wave <b>${num}</b> &middot; ${created ? created : "no order date"} &middot; ${op || ""}<br>` +
+      `<b>${locs.length}</b> rack location(s)` + (nonRack ? `, ${nonRack} line(s) at non-rack areas (not shown)` : "");
+    const list = document.getElementById("waveList");
+    list.innerHTML = locs.map(li => `<div data-i="${li}"><span>${L[li].code}</span><span class="note">level ${L[li].z}</span></div>`).join("");
+    list.style.display = "block";
+    list.querySelectorAll("div").forEach(d => d.onclick = () => { const l = L[+d.dataset.i]; focusOn(l); showDetails(l.i); });
+  }
+  function waveFromInput() {
+    const v = parseInt(document.getElementById("waveText").value, 10), msg = document.getElementById("waveMsg");
+    if (v in waveIdx) showWave(waveIdx[v]);
+    else { msg.className = "msg err"; msg.textContent = "Wave not found (only waves with rack picks are listed)."; return; }
+    msg.className = "msg";
+  }
+
+  // ---------- floor plans ----------
+  const plans = document.getElementById("plans"), planImg = document.getElementById("planImg");
+  function openPlan(z) {
+    planImg.src = `../raw/dataset_Layout_Z${z}.0.svg`;
+    document.querySelectorAll("#plans .pl").forEach(b => b.classList.toggle("on", b.dataset.z == z));
+    plans.style.display = "block";
+  }
+  document.querySelectorAll("#plans .pl").forEach(b => b.onclick = () => openPlan(b.dataset.z));
+  document.getElementById("openPlans").onclick = () => openPlan(1);
+  document.getElementById("planClose").onclick = () => plans.style.display = "none";
+  document.getElementById("planZoom").onclick = e => {
+    const full = planImg.classList.toggle("full");
+    e.target.textContent = full ? "Zoom: 100%" : "Zoom: fit";
+  };
+
+  // ---------- wiring ----------
+  const $ = id => document.getElementById(id);
+  $("colourBy").onchange = e => { state.colourBy = e.target.value; state.highlight = null; pins.count = 0; paint(); };
+  $("plan").onchange = e => {
+    state.plan = e.target.value;
+    if (state.colourBy !== "plan" && e.target.value !== "recorded" && W.policies[e.target.value].classColumn) {
+      state.colourBy = "plan"; $("colourBy").value = "plan";
+    }
+    paint();
+    if (state.selected !== null) showDetails(state.selected);
+  };
+  document.querySelectorAll(".lvl").forEach(cb => cb.onchange = () => { levelOn[cb.value] = cb.checked; placeBoxes(); });
+  $("showSupport").onchange = e => supportGroup.visible = e.target.checked;
+  $("showRacks").onchange = e => rackGroup.visible = e.target.checked;
+  $("view3d").onclick = view3d; $("viewTop").onclick = viewTop; $("viewReset").onclick = () => { clearAll(); state.selected = null; $("details").style.display = "none"; paint(); view3d(); };
+  $("findBtn").onclick = find; $("findText").onkeydown = e => { if (e.key === "Enter") find(); };
+  $("clearBtn").onclick = () => { $("findText").value = ""; clearAll(); };
+  $("waveBtn").onclick = waveFromInput; $("waveText").onkeydown = e => { if (e.key === "Enter") waveFromInput(); };
+  $("wavePrev").onclick = () => showWave(state.wave === null ? 0 : Math.max(0, state.wave - 1));
+  $("waveNext").onclick = () => showWave(state.wave === null ? 0 : Math.min(W.waves.length - 1, state.wave + 1));
+  $("waveRand").onclick = () => showWave(Math.floor(Math.random() * W.waves.length));
+
+  function resize() {
+    const r = host.getBoundingClientRect();
+    renderer.setSize(r.width, r.height);
+    camera.aspect = r.width / Math.max(1, r.height); camera.updateProjectionMatrix();
+  }
+  window.addEventListener("resize", resize);
+
+  placeBoxes(); paint(); resize(); view3d();
+  // open with a wave from the URL, e.g. index.html#wave=43175
+  const hw = location.hash.match(/wave=(\d+)/);
+  if (hw && hw[1] in waveIdx) showWave(waveIdx[hw[1]]);
+  (function loop() { controls.update(); renderer.render(scene, camera); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

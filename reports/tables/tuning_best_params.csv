@@ -1,0 +1,11 @@
+held_out,algo,cv_regret_m,n_estimators,min_samples_split,min_samples_leaf,max_features,max_depth,subsample,min_child_weight,learning_rate,colsample_bytree
+AsRecorded,rf,6.616198413320004,200,10.0,1.0,0.5,12,,,,
+AsRecorded,xgb,6.272546162519931,200,,,,6,0.7,5.0,0.05,1.0
+Random,rf,5.286859753521433,300,5.0,2.0,sqrt,16,,,,
+Random,xgb,4.962187982782862,500,,,,3,0.7,3.0,0.1,1.0
+ClassBased,rf,6.072518135225704,200,20.0,2.0,sqrt,16,,,,
+ClassBased,xgb,5.963342203824166,200,,,,6,0.7,5.0,0.05,1.0
+Dedicated,rf,6.554716515563039,300,20.0,4.0,0.5,24,,,,
+Dedicated,xgb,6.334350992571501,500,,,,4,0.85,1.0,0.03,0.8
+Hybrid,rf,6.122258311718935,200,10.0,1.0,0.5,12,,,,
+Hybrid,xgb,5.941638764442349,500,,,,4,0.85,1.0,0.03,0.8

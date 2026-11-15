@@ -1,0 +1,62 @@
+[Data Sources] loaded 5 tables + 4 storage policies
+[Initial Data Inspection]
+             table   rows  columns  null_cells  duplicate_rows
+     picking_waves 215192        6           0          102201
+   customer_orders 122370        9          16            2559
+          products    208        3           0               0
+ storage_locations   2292        5           0               0
+    support_points     44        4           0               0
+    storage_Random  41256        4           0           20455
+storage_ClassBased  42138        4           0             205
+ storage_Dedicated  42120        4           0           29634
+    storage_Hybrid  42120        4           0            6228
+[Data Cleaning] 215,192 unit rows -> 112,991 order lines; 5.2% lines at non-rack locations
+[Core Data Structures] loaded cached instances: 47,971
+[Statistical Analysis]
+                        variable  mean  median  std  min  max  skewness  kurtosis  iqr_outliers
+            Order lines per wave 11.71    12.0 6.40    1   26     -0.09     -1.15             0
+                  Units per wave 20.95    24.0 5.77    1   30     -1.99      3.08          1449
+Distinct pick locations per wave 10.20    10.0 5.75    1   24      0.02     -1.10             0
+         Aisles visited per wave  5.57     6.0 2.99    1   15      0.17     -0.78             0
+[Statistical Analysis] chi2=2557.6, dof=8, p=0.00e+00, Cramer's V=0.163
+[Data Visualization] EDA figures written to C:\Workstation\OneDrive - NEXT\AI\SmartRouteML\smartroute-wms\reports\figures
+[Data Splitting] cut-off 2023-08-23 06:35:00; folds: AsRecorded: 25,817/1,929, Random: 25,532/1,943, ClassBased: 25,365/1,943, Dedicated: 25,444/1,943, Hybrid: 25,446/1,943
+[Validation Techniques] weighting ablation
+weighting  cv_regret_m  cv_regret_std
+     none        6.930          0.150
+ balanced        6.952          0.110
+   spread        6.838          0.057
+[Hyperparameter Optimization] rf: CV regret 6.62 m with {'model__n_estimators': 200, 'model__min_samples_split': 10, 'model__min_samples_leaf': 1, 'model__max_features': 0.5, 'model__max_depth': 12}
+[Hyperparameter Optimization] xgb: CV regret 6.27 m with {'model__subsample': 0.7, 'model__n_estimators': 200, 'model__min_child_weight': 5, 'model__max_depth': 6, 'model__learning_rate': 0.05, 'model__colsample_bytree': 1.0}
+[Hyperparameter Optimization] rf: CV regret 5.29 m with {'model__n_estimators': 300, 'model__min_samples_split': 5, 'model__min_samples_leaf': 2, 'model__max_features': 'sqrt', 'model__max_depth': 16}
+[Hyperparameter Optimization] xgb: CV regret 4.96 m with {'model__subsample': 0.7, 'model__n_estimators': 500, 'model__min_child_weight': 3, 'model__max_depth': 3, 'model__learning_rate': 0.1, 'model__colsample_bytree': 1.0}
+[Hyperparameter Optimization] rf: CV regret 6.07 m with {'model__n_estimators': 200, 'model__min_samples_split': 20, 'model__min_samples_leaf': 2, 'model__max_features': 'sqrt', 'model__max_depth': 16}
+[Hyperparameter Optimization] xgb: CV regret 5.96 m with {'model__subsample': 0.7, 'model__n_estimators': 200, 'model__min_child_weight': 5, 'model__max_depth': 6, 'model__learning_rate': 0.05, 'model__colsample_bytree': 1.0}
+[Hyperparameter Optimization] rf: CV regret 6.55 m with {'model__n_estimators': 300, 'model__min_samples_split': 20, 'model__min_samples_leaf': 4, 'model__max_features': 0.5, 'model__max_depth': 24}
+[Hyperparameter Optimization] xgb: CV regret 6.33 m with {'model__subsample': 0.85, 'model__n_estimators': 500, 'model__min_child_weight': 1, 'model__max_depth': 4, 'model__learning_rate': 0.03, 'model__colsample_bytree': 0.8}
+[Hyperparameter Optimization] rf: CV regret 6.12 m with {'model__n_estimators': 200, 'model__min_samples_split': 10, 'model__min_samples_leaf': 1, 'model__max_features': 0.5, 'model__max_depth': 12}
+[Hyperparameter Optimization] xgb: CV regret 5.94 m with {'model__subsample': 0.85, 'model__n_estimators': 500, 'model__min_child_weight': 1, 'model__max_depth': 4, 'model__learning_rate': 0.03, 'model__colsample_bytree': 0.8}
+[Model Diagnostics] rf: final train/val accuracy 0.863/0.736
+[Model Diagnostics] xgb: final train/val accuracy 0.837/0.748
+[Evaluation] pooled comparison
+                   method              key  mean_distance_m  median_distance_m  total_distance_km  mean_picking_time_min  gap_to_optimal_pct  improvement_vs_sshape_pct  mean_regret_m  optimal_hit_rate_pct  compute_time_ms
+         S-shape (always)           SShape           303.84             312.32            2947.53                   8.06               15.95                       0.00          12.43                 19.83             0.16
+          Return (always)           Return           316.88             323.30            3074.03                   8.27               19.65                      -4.29          25.47                 20.64             0.10
+     Largest Gap (always)       LargestGap           322.95             328.18            3132.92                   8.37               21.32                      -6.29          31.54                 21.48             0.22
+       RF-selected policy               RF           296.84             304.54            2879.61                   7.94               12.60                       2.30           5.43                 26.69            13.98
+  XGBoost-selected policy              XGB           296.78             303.93            2879.02                   7.94               12.56                       2.32           5.36                 26.61             3.18
+ Perfect policy selection PerfectSelection           291.41             298.44            2826.98                   7.85               10.78                       4.09           0.00                 28.50             0.48
+Optimal route (exact TSP)          Optimal           256.45             265.35            2487.78                   7.27                0.00                      15.60         -34.97                100.00            60.37
+[Statistical tests]
+                                   comparison  n_non_tied  mean_diff_m  median_diff_m    w_stat  p_value  rank_biserial
+                                 RF vs SShape        4042      -7.0015         0.0000 1269283.0   0.0000        -0.6893
+                                XGB vs SShape        4212      -7.0621         0.0000 1504014.0   0.0000        -0.6610
+                                    RF vs XGB         709       0.0606         0.0000  114725.5   0.0415         0.0884
+                       RF vs PerfectSelection        2226       5.4250         0.0000       0.0   0.0000         1.0000
+                                RF vs Optimal        7112      40.3904        33.3975       0.0   0.0000         1.0000
+Friedman: SShape, Return, LargestGap, RF, XGB        9701          NaN            NaN    7120.4   0.0000            NaN
+[Model Comparison & Selection] selected XGBoost-selected policy (296.78 m, gap to optimal 12.56 %)
+[Model Packaging] saved footwear_routing_policy_rf.joblib
+[Model Packaging] saved footwear_routing_policy_xgb.joblib
+[MLOps & Lifecycle] model card written to model_card.json
+[Done] pipeline finished in 23.7 min

@@ -1,0 +1,106 @@
+{
+  "created": "2026-11-13T18:23:03",
+  "selected_model": "xgb",
+  "models": {
+    "rf": "footwear_routing_policy_rf.joblib",
+    "xgb": "footwear_routing_policy_xgb.joblib"
+  },
+  "task": "multiclass routing-policy selection",
+  "classes": [
+    "SShape",
+    "Return",
+    "LargestGap"
+  ],
+  "features": [
+    "num_lines",
+    "num_units",
+    "num_picks",
+    "picks_per_aisle_mean",
+    "picks_per_aisle_max",
+    "num_aisles",
+    "num_aisles_left",
+    "num_aisles_right",
+    "num_blocks",
+    "share_right_block",
+    "odd_aisles_left",
+    "odd_aisles_right",
+    "aisle_span_m",
+    "aisle_density",
+    "depth_mean_frac",
+    "depth_max_frac",
+    "depth_std_frac",
+    "deepest_frac_mean",
+    "deep_aisle_share",
+    "largest_gap_frac_mean",
+    "depot_distance_mean_m",
+    "depot_distance_max_m",
+    "nn_distance_mean_m",
+    "x_std_m",
+    "y_std_m",
+    "share_below_depot",
+    "share_a",
+    "share_b",
+    "share_c"
+  ],
+  "training_rows": 40206,
+  "dataset": "Mendeley pf2w725pw3 v1 (de Assis, de Paula Ferreira and Ouhimmou, 2025)",
+  "validation": "leave-one-storage-configuration-out x chronological 80/20 wave split; GroupKFold(wave) tuning",
+  "test_metrics": {
+    "SShape": {
+      "mean_distance_m": 303.8377,
+      "gap_to_optimal_pct": 15.9485,
+      "improvement_vs_sshape_pct": 0.0,
+      "mean_regret_m": 12.4265,
+      "compute_time_ms": 0.164,
+      "mean_picking_time_min": 8.0554
+    },
+    "Return": {
+      "mean_distance_m": 316.8778,
+      "gap_to_optimal_pct": 19.6474,
+      "improvement_vs_sshape_pct": -4.2918,
+      "mean_regret_m": 25.4665,
+      "compute_time_ms": 0.1019,
+      "mean_picking_time_min": 8.2728
+    },
+    "LargestGap": {
+      "mean_distance_m": 322.9484,
+      "gap_to_optimal_pct": 21.3191,
+      "improvement_vs_sshape_pct": -6.2898,
+      "mean_regret_m": 31.5372,
+      "compute_time_ms": 0.2165,
+      "mean_picking_time_min": 8.374
+    },
+    "RF": {
+      "mean_distance_m": 296.8362,
+      "gap_to_optimal_pct": 12.5994,
+      "improvement_vs_sshape_pct": 2.3043,
+      "mean_regret_m": 5.425,
+      "compute_time_ms": 13.976,
+      "mean_picking_time_min": 7.9387
+    },
+    "XGB": {
+      "mean_distance_m": 296.7756,
+      "gap_to_optimal_pct": 12.5622,
+      "improvement_vs_sshape_pct": 2.3243,
+      "mean_regret_m": 5.3644,
+      "compute_time_ms": 3.1769,
+      "mean_picking_time_min": 7.9377
+    },
+    "PerfectSelection": {
+      "mean_distance_m": 291.4112,
+      "gap_to_optimal_pct": 10.7793,
+      "improvement_vs_sshape_pct": 4.0898,
+      "mean_regret_m": 0.0,
+      "compute_time_ms": 0.4824,
+      "mean_picking_time_min": 7.8483
+    },
+    "Optimal": {
+      "mean_distance_m": 256.4459,
+      "gap_to_optimal_pct": 0.0,
+      "improvement_vs_sshape_pct": 15.5977,
+      "mean_regret_m": -34.9654,
+      "compute_time_ms": 60.367,
+      "mean_picking_time_min": 7.2656
+    }
+  }
+}

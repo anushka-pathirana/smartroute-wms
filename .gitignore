@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Generated feature export (rebuilt by `python main.py`)
+data/processed/footwear_routing_features.csv
+
+# Report figures made for the written report, not by the pipeline
+reports/screenshots/
+reports/figures/design_*.png
+
+# Streamlit / editor
+.streamlit/secrets.toml
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store

@@ -1,0 +1,113 @@
+{
+  "label_test": {
+    "chi2": 2557.5699080690756,
+    "dof": 8,
+    "p_value": 0.0,
+    "cramers_v": 0.16327112040116562
+  },
+  "split": {
+    "cutoff_rank": 7764,
+    "cutoff_time": "2023-08-23 06:35:00",
+    "test_wave_fraction": 0.2
+  },
+  "example_wave": {
+    "wave_number": 42733,
+    "recommended": "Return",
+    "candidates": 238,
+    "median_saving_m": 23.49,
+    "distances_m": {
+      "SShape": 326.81,
+      "Return": 303.32,
+      "LargestGap": 390.09,
+      "Optimal": 290.36
+    }
+  },
+  "selected_model": "xgb",
+  "num_instances": 47971,
+  "num_waves": 9707,
+  "tie_share": 0.161868628963332,
+  "label_share": {
+    "SShape": 0.5283817306289217,
+    "Return": 0.2472743949469471,
+    "LargestGap": 0.22434387442413126
+  },
+  "pooled": {
+    "SShape": {
+      "mean_distance_m": 303.8377,
+      "gap_to_optimal_pct": 15.9485,
+      "improvement_vs_sshape_pct": 0.0,
+      "mean_regret_m": 12.4265,
+      "compute_time_ms": 0.164,
+      "mean_picking_time_min": 8.0554
+    },
+    "Return": {
+      "mean_distance_m": 316.8778,
+      "gap_to_optimal_pct": 19.6474,
+      "improvement_vs_sshape_pct": -4.2918,
+      "mean_regret_m": 25.4665,
+      "compute_time_ms": 0.1019,
+      "mean_picking_time_min": 8.2728
+    },
+    "LargestGap": {
+      "mean_distance_m": 322.9484,
+      "gap_to_optimal_pct": 21.3191,
+      "improvement_vs_sshape_pct": -6.2898,
+      "mean_regret_m": 31.5372,
+      "compute_time_ms": 0.2165,
+      "mean_picking_time_min": 8.374
+    },
+    "RF": {
+      "mean_distance_m": 296.8362,
+      "gap_to_optimal_pct": 12.5994,
+      "improvement_vs_sshape_pct": 2.3043,
+      "mean_regret_m": 5.425,
+      "compute_time_ms": 13.976,
+      "mean_picking_time_min": 7.9387
+    },
+    "XGB": {
+      "mean_distance_m": 296.7756,
+      "gap_to_optimal_pct": 12.5622,
+      "improvement_vs_sshape_pct": 2.3243,
+      "mean_regret_m": 5.3644,
+      "compute_time_ms": 3.1769,
+      "mean_picking_time_min": 7.9377
+    },
+    "PerfectSelection": {
+      "mean_distance_m": 291.4112,
+      "gap_to_optimal_pct": 10.7793,
+      "improvement_vs_sshape_pct": 4.0898,
+      "mean_regret_m": 0.0,
+      "compute_time_ms": 0.4824,
+      "mean_picking_time_min": 7.8483
+    },
+    "Optimal": {
+      "mean_distance_m": 256.4459,
+      "gap_to_optimal_pct": 0.0,
+      "improvement_vs_sshape_pct": 15.5977,
+      "mean_regret_m": -34.9654,
+      "compute_time_ms": 60.367,
+      "mean_picking_time_min": 7.2656
+    }
+  },
+  "classification": [
+    {
+      "model": "Random Forest",
+      "accuracy": 0.7314,
+      "precision_macro": 0.718,
+      "recall_macro": 0.6973,
+      "f1_macro": 0.6936,
+      "f1_weighted": 0.7174,
+      "train_accuracy": 0.872
+    },
+    {
+      "model": "XGBoost",
+      "accuracy": 0.7393,
+      "precision_macro": 0.7266,
+      "recall_macro": 0.7114,
+      "f1_macro": 0.7096,
+      "f1_weighted": 0.73,
+      "train_accuracy": 0.7882
+    }
+  ],
+  "runtime_minutes": 23.7
+}
